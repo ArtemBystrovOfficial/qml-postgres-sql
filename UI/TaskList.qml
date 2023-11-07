@@ -8,8 +8,9 @@ Rectangle {
     color:"#222222"
     property int tasksMargin: 30
     property int taskHeight: 30
-
-    signal openTask(int index)
+    
+    signal openedTask(int index)
+    signal deletedTask(int index)
 
     function addEmptyTask() {
         TaskModel.addEmptyTask();
@@ -34,10 +35,14 @@ Rectangle {
                     TaskHeader {
                         width: parent.width
                         height: taskHeight
-                        header_title: title
-                        header_updated_at: updatedAt
-                        header_desc: desc
+                        header_title: {
+                            var title = item.title
+                            return !title.length ? qsTr("Без имени") : title 
+                        }
+                        header_updated_at: item.updatedAt
+                        header_desc: item.desc
                         onOpened: openTask(index)    
+                        onDeleted: deletedTask(index)
                     }
                 }
             }

@@ -6,8 +6,6 @@
 class QmlSingletonModels {
 public:
   static QmlSingletonModels& Instanse();
-
 private: 
 	QmlSingletonModels();
-	std::unique_ptr<TaskModel> m_task_model;
 };

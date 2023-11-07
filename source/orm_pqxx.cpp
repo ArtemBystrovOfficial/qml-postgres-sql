@@ -1,47 +1,25 @@
 #include "orm_pqxx.hpp"
 
-std::string DataBaseAccess::getFullText(const task_t & task) {
-    int id = std::get<0>(task);
-    pqxx::work m_work(m_conn);
-    pqxx::row out = m_work.exec1((std::string("SELECT COALESCE(full_text,\'\') as text FROM tasks WHERE id = ") + std::to_string(id)).c_str());
-    return out[0].as<std::string>();
+std::string DataBaseAccess::searchRule(const FilterSelectPack& pack) {
+	std::string out = "WHERE ";
+	if (pack.search_text.has_value()) {
+		if (pack.search_fields.empty())
+			return "";
+		for (auto& field : pack.search_fields) {
+			out += std::format("{} ILIKE '%' || '{}' || '%' OR ", field, pack.search_text.value());
+		}
+		out.erase(out.end() - 3, out.end()); //Last OR
+	}
+	else
+		return "";
+	return out;
 }
 
-std::shared_ptr<task_list_t> DataBaseAccess::getTaskList(
-    std::optional<std::string> search_text) {
-    std::shared_ptr<task_list_t> task_list(std::make_unique<task_list_t>());
-    pqxx::work m_work(m_conn);
-
-    pqxx::result out = search_text.has_value() ? 
-    m_work.exec((std::string("SELECT * FROM search_with_task_header_view (\'") + search_text.value() + std::string("\')")).c_str())
-              :  m_work.exec("SELECT * FROM task_header_view");
-
-    for (auto row : out) {
-        task_list->push_back(task_t{});
-        row.to(task_list->back());
-    }
-    return task_list;
+std::string DataBaseAccess::sortRule(const FilterSelectPack& pack) {
+	return pack.sort_asc.has_value()
+		? std::format("ORDER BY {} {}", pack.sort_field, pack.sort_asc.value() ? "ASC" : "DESC") : "";
 }
 
-bool DataBaseAccess::addTask(const task_t & task) {
-    try {
-        pqxx::work m_work(m_conn);
-        m_work.exec((std::string("INSERT INTO tasks (title) VALUES (\'") +
-                     std::get<1>(task) + std::string("\')").c_str()));
-        m_work.commit();
-    } catch (...) { return false; }
-    return true;
-}
+DataBaseAccess::DataBaseAccess(const std::string& connection_query)
+	: m_conn(connection_query.c_str()) {}
 
-void DataBaseAccess::updateTask(const task_t & task) {
-  try {
-    auto where = std::string("' WHERE id = ") + std::to_string(std::get<0>(task));
-    pqxx::work m_work(m_conn);
-    m_work.exec((std::string("UPDATE tasks SET title = '") + std::get<1>(task) + where).c_str());
-    m_work.exec((std::string("UPDATE tasks SET full_text = '") + std::get<3>(task) + where).c_str());
-    m_work.commit();
-  } catch (std::exception const &e) {
-    std::cerr << e.what() << std::endl;
-  }
-  //return true;
-}

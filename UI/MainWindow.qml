@@ -3,37 +3,46 @@ import QtQuick.Controls 2.15
 import CppObjects 1.0
 
 ApplicationWindow {
+    id: root
     visible: true
-    width: 480
-    height: 720
+
+    maximumHeight: minimumHeight
+    maximumWidth: minimumWidth
+    minimumHeight: 720
+    minimumWidth: 480
     title: "Tasks"
     property int last_index_opened: -1
     //menuBar: MenuBar {
         // ...
     //}
 
+    function openTask(index) {
+        mainStackView.push(editArea,
+            { "taskItem" : TaskModel.Get(index),
+              "fullText" : TaskModel.getFullText(index) }
+        )
+        last_index_opened = index
+    }
+
     header: MainToolBar {  
         mainStackView: mainStackView
-        onNewTask: mainStackView.get(0).addEmptyTask()
+        onNewTask: {
+            TaskModel.addEmpty()
+            openTask(0)
+        }
         onSearchRequest: TaskModel.searchText(text) 
         onReturnFromTask: {
-            TaskModel.saveTask(last_index_opened,
-                               mainStackView.get(1).title,
-                               mainStackView.get(1).desc)
+            mainStackView.get(1).saveChanges();
             mainStackView.pop()
+            TaskModel.unloadChanges();
         }                   
     }
 
     Component {
         id: taskList
         TaskList {
-            onOpenTask: {
-                mainStackView.push(editArea,
-                    {"title" : TaskModel.getTitle(index),
-                    "desc" : TaskModel.getFullText(index)}
-                )
-                last_index_opened = index
-            }
+            onOpenedTask: root.openTask(index)
+            onDeletedTask: TaskModel.Delete(index)
         }
     }
 

@@ -8,6 +8,7 @@ Rectangle {
     property string header_desc: "-"
 
     signal opened()
+    signal deleted()
 
     id: rootTask
     height: 30
@@ -43,6 +44,33 @@ Rectangle {
                 item.isTitle = false
             }
         }
+        Rectangle {
+            color: "black"
+            width: 20
+            height: rootTask.height
+            Text {
+                anchors.centerIn: parent
+                text: "-"
+                color: "white"
+            }
+            MouseArea {
+                id: mouseAreaDelete
+                anchors.fill: parent 
+                hoverEnabled: true
+                onClicked: deleted()
+            }
+            ColorAnimation on color {
+                to: "red"
+                duration: 100
+                running: mouseAreaDelete.containsMouse
+            }       
+            ColorAnimation on color {
+                to: "black"
+                duration: 100
+                running: !mouseAreaDelete.containsMouse
+            }   
+        }
+        Item { Layout.fillWidth:true; height:1 }
     }
 
     Component {
@@ -56,6 +84,10 @@ Rectangle {
             opacity: mouseArea.containsMouse ? 0.8 : 1
             height: rootTask.height
             width: 430 * scale
+            border {
+                width: 1
+                color: mouseArea.containsMouse ? "gray" : "transparent"
+            }
             Text {
                 width: parent.width - 20
                 elide: Text.ElideRight

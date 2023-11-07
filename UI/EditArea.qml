@@ -3,11 +3,13 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.3
 
 Rectangle {
-    property alias title: titleArea.text
-    property alias desc: descArea.text
+    property var taskItem
+    property string fullText
     id: root
-    //width: 480
-    //height: 600
+    function  saveChanges() {
+        taskItem.title = titleArea.text
+        taskItem.desc = descArea.text
+    }
     
     color:"#444444"
 
@@ -16,6 +18,7 @@ Rectangle {
         spacing:0
         TextArea {
             id: titleArea
+            text: taskItem ? taskItem.title : ""
             color: "white"
             font.family: "Helvetica"
             font.pointSize: 12
@@ -35,7 +38,8 @@ Rectangle {
         }
         TextArea {
             id: descArea
-            wrapMode: Text.WordWrap
+            text: fullText
+            wrapMode: Text.Wrap
             Layout.fillHeight: true
             Layout.fillWidth: true
             color: "white"

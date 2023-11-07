@@ -6,9 +6,11 @@ TaskModel::TaskModel(QObject* parent)
     selectModel();
 }
 
-void TaskModel::addEmptyTask() {
-    if (DataBaseAccess::Instanse().addTask({0, "No name", "", ""})) 
+bool TaskModel::addEmpty() {
+    bool is = DataBaseAccess::Instanse().Insert(task_t{});
+    if (is)
         selectModel();
+    return is;
 }
 
 void TaskModel::searchText(const QString& str) {
@@ -17,58 +19,74 @@ void TaskModel::searchText(const QString& str) {
 }
 
 QString TaskModel::getFullText(int index) {
-    return QString::fromStdString(DataBaseAccess::Instanse().getFullText(m_temp_list_->at(index)));
+    auto opt = DataBaseAccess::Instanse().specialSelect11<std::string>(
+        std::format("SELECT full_text FROM {} WHERE id = {} ", types_impl::tuple_info_name<task_t>(),
+        m_list[index]->id())
+     );
+    return QString::fromStdString(opt.has_value() ? opt.value() : "");
 }
 
-Q_INVOKABLE QString TaskModel::getTitle(int index) {
-    return QString::fromStdString(std::get<1>(m_temp_list_->at(index))); 
+Q_INVOKABLE void TaskModel::unloadChanges() {
+    bool is_any = false;
+    for (auto& elem : m_list) 
+        if (elem->isSomeToUpdate()) {
+            DataBaseAccess::Instanse().Update(elem->getData(), elem->unload());
+            is_any = true;
+        }
+    if (is_any)
+        selectModel();
 }
 
-Q_INVOKABLE void TaskModel::saveTask(int index,const QString& title, const QString& full_text) {
-    DataBaseAccess::Instanse().updateTask({std::get<0>(m_temp_list_->at(index)),
-                                            title.toStdString(), 
-                                            "",
-                                            full_text.toStdString()});
-    selectModel();
+Q_INVOKABLE bool TaskModel::Delete(int index) {
+    bool is = DataBaseAccess::Instanse().Delete(m_list[index]->getData());
+    if(is)
+        selectModel();
+    return is;
+}
+
+Q_INVOKABLE Task* TaskModel::Get(int index) {
+    return m_list[index].get();
 }
 
 int TaskModel::rowCount(const QModelIndex& parent) const {
     Q_UNUSED(parent);
-    return m_temp_list_ ? m_temp_list_->size() : 0;
+    return  m_list.size();
 }
 
 QVariant TaskModel::data(const QModelIndex& index, int role) const {
-    if (!index.isValid() && m_temp_list_)
-        return QVariant();
+    if (!index.isValid())
+        return {};
 
-    int idx = index.row();  
-
-    auto& task = m_temp_list_->at(idx);
-
-    QVariant out;
     switch (static_cast<role_t>(role)) {
-      case role_t::id: out  = std::get<0>(task);break;
-      case role_t::title: out = QString::fromStdString(std::get<1>(task)); break;
-      case role_t::updatedAt: out = QString::fromStdString(std::get<2>(task)); break;
-      case role_t::desc: out = QString::fromStdString(std::get<3>(task)); break;
+        case role_t::item: return QVariant::fromValue(m_list[index.row()].get()); break;
     }
 
-    return out;
+    return {};
 }
 
 QHash<int, QByteArray> TaskModel::roleNames() const {
     QHash<int, QByteArray> roles;
-    roles[static_cast<int>(role_t::id)] = "id";
-    roles[static_cast<int>(role_t::title)] = "title";
-    roles[static_cast<int>(role_t::updatedAt)] = "updatedAt";
-    roles[static_cast<int>(role_t::desc)] = "desc";
+    roles[static_cast<int>(role_t::item)] = "item";
     return roles;
 }
 
 void TaskModel::selectModel() { 
     emit beginResetModel(); 
-            m_temp_list_ = m_current_filter_search.isEmpty()
-            ? DataBaseAccess::Instanse().getTaskList()
-            : DataBaseAccess::Instanse().getTaskList(m_current_filter_search.toStdString());
+    auto opt = DataBaseAccess::Instanse().Select<task_t>(DataBaseAccess::FilterSelectPack{
+            false,
+            "updated_at",
+            (m_current_filter_search.isEmpty() ? std::nullopt : std::make_optional(m_current_filter_search.toStdString())),
+            {"title", "full_text"}
+    });
+    if (opt.has_value()) {
+        auto& list = opt.value();
+        m_list.clear();
+        m_list.resize(list.size());
+        std::transform(list.begin(), list.end(), m_list.begin(), [this](const task_t& task_i) {
+            std::unique_ptr<Task> task_o(std::make_unique<Task>(this));
+            task_o->setData(task_i);
+            return std::move(task_o);
+        });
+    }
     emit endResetModel();
 }

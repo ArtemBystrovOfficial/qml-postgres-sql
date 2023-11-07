@@ -9,13 +9,15 @@ QmlSingletonModels& QmlSingletonModels::Instanse() {
 	return model;
 }
 
-QmlSingletonModels::QmlSingletonModels() 
-: m_task_model(std::make_unique <TaskModel>()) {
-//TastModel
+QmlSingletonModels::QmlSingletonModels() {
+//TaskModel
+    static auto task_model = new TaskModel;
+
+    qmlRegisterType<Task>(REGISTER_QML_TYPES, "Task");
     qmlRegisterSingletonType<TaskModel>(REGISTER_QML_TYPES, "TaskModel",
     [&](QQmlEngine* engine, QJSEngine* scriptEngine) -> QObject* {
         Q_UNUSED(engine)
         Q_UNUSED(scriptEngine)
-        return m_task_model.get();
+        return task_model;
     });
 }

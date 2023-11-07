@@ -9,7 +9,7 @@ if(DEBUG)
     set(QT_QMAKE_EXECUTABLE "C:\\QtCreator\\6.6.0\\msvc2019_64\\bin\\")
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -22,7 +22,7 @@ qt_standard_project_setup()
 
 set(CMAKE_AUTORCC ON)
 
-qt_add_executable(main WIN32 
+qt_add_executable(main #WIN32 
     UI/main.qrc
     ${SOURCE_FILES}
     ${HEADER_FILES}
