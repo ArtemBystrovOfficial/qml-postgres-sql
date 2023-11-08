@@ -6,17 +6,23 @@ Rectangle {
     property string header_title: "-"
     property string header_updated_at : "-"
     property string header_desc: "-"
+    property color color_scheme
 
     signal opened()
     signal deleted()
+    signal setRandColor()
 
     id: rootTask
     height: 30
-    color: "#555555"
     radius: 4
     RowLayout {
         spacing: 0
         anchors.fill: parent
+        Rectangle {
+            width: 2
+            height: parent.height
+            color: color_scheme
+        }
         Loader {
             id: title
             sourceComponent: cellInRow
@@ -24,6 +30,7 @@ Rectangle {
                 item.text = header_title
                 item.scale = 0.2
                 item.isTitle = true
+                item.color_scheme = color_scheme
             }
         }
         Loader {
@@ -33,6 +40,7 @@ Rectangle {
                 item.text = header_updated_at
                 item.scale = 0.4
                 item.isTitle = false
+                item.color_scheme = color_scheme
             }
         }
         Loader {
@@ -42,6 +50,7 @@ Rectangle {
                 item.text = header_desc
                 item.scale = 0.4
                 item.isTitle = false
+                item.color_scheme = color_scheme
             }
         }
         Rectangle {
@@ -79,6 +88,7 @@ Rectangle {
             property alias text: cellTitle.text
             property real scale
             property color colorBackground
+            property color color_scheme
             property bool isTitle: false
             color: isTitle ? "#444444" : "#555555"
             opacity: mouseArea.containsMouse ? 0.8 : 1
@@ -102,7 +112,15 @@ Rectangle {
                 id: mouseArea
                 anchors.fill: parent
                 hoverEnabled: true
-                onClicked: opened()
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: {
+                    if (mouse.button === Qt.RightButton) { // 'mouse' is a MouseEvent argument passed into the onClicked signal handler
+                        setRandColor()
+                    } else if 
+                    (mouse.button === Qt.LeftButton) {
+                        opened()    
+                    }
+                }
             }
             ScaleAnimator {
                 target: parent
@@ -118,6 +136,16 @@ Rectangle {
                 duration: 12
                 running: !mouseArea.containsMouse
             }
+            ColorAnimation on color {
+                to: color_scheme
+                duration: 100
+                running: mouseArea.containsMouse
+            }       
+            ColorAnimation on color {
+                to: "#444444"
+                duration: 100
+                running: !mouseArea.containsMouse
+            } 
         }
     }
 

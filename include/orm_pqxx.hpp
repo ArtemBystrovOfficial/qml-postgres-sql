@@ -70,8 +70,8 @@ private:
 template<class Tuple> requires CustomTupleC<Tuple>
 inline std::optional<std::vector<Tuple>> DataBaseAccess::Select(const FilterSelectPack& pack) {
 	try {
-		auto from = Task_Tuple::tuple_info_name();
-		auto sel = Task_Tuple::tuple_info_custom_select();
+		auto from = Tuple::tuple_info_name();
+		auto sel = Tuple::tuple_info_custom_select();
 		auto query = std::format(
 			"SELECT {} FROM {} {} {}",
 			sel, from, searchRule(pack), sortRule(pack)

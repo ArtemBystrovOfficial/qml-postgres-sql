@@ -3,6 +3,7 @@
 #include <QAbstractListModel>
 #include <types.hpp>
 #include <bitset>
+#include <QObject>
 
 //TODO import meta factory object and models from another project and adapt from proto to tuples
 
@@ -13,11 +14,13 @@ class Task : public QObject {
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QString updatedAt READ updatedAt WRITE setUpdatedAt NOTIFY updatedAtChanged)
     Q_PROPERTY(QString desc READ desc WRITE setDesc NOTIFY descChanged)
+    Q_PROPERTY(int colorSchemeId READ colorSchemeId WRITE setColorSchemeId NOTIFY colorSchemeIdChanged)
 
 signals:
     void titleChanged();
     void updatedAtChanged();
     void descChanged();
+    void colorSchemeIdChanged();
 
 public:
     using update_pool = std::bitset<Task_Tuple::tuple_size>;
@@ -28,10 +31,12 @@ public:
     QString title() const { return QString::fromStdString(std::get<1>(m_data.tp)); }
     QString updatedAt() const { return QString::fromStdString(std::get<2>(m_data.tp)); }
     QString desc() const { return QString::fromStdString(std::get<3>(m_data.tp)); }
+    int colorSchemeId() const { return std::get<4>(m_data.tp); }
 
     void setTitle(const QString& str) { std::get<1>(m_data.tp) = str.toStdString(); m_to_update_.set(1); emit titleChanged(); };
     void setUpdatedAt(const QString& str) { std::get<2>(m_data.tp) = str.toStdString(); m_to_update_.set(2); emit updatedAtChanged(); };
     void setDesc(const QString& str) { std::get<3>(m_data.tp) = str.toStdString(); m_to_update_.set(3); emit descChanged(); };
+    void setColorSchemeId(int id) { std::get<4>(m_data.tp) = id; m_to_update_.set(4); emit colorSchemeIdChanged(); }
 
     const Task_Tuple& getData() const { return m_data; }
     void setData(const Task_Tuple& data) { m_data = data; }

@@ -35,6 +35,12 @@ Rectangle {
                     TaskHeader {
                         width: parent.width
                         height: taskHeight
+                        color_scheme: {
+                            if(item.colorSchemeId == -1)
+                                return "#000000"
+                            console.log(item.colorSchemeId)
+                            return ColorSchemeModel.GetById(item.colorSchemeId).color
+                        } 
                         header_title: {
                             var title = item.title
                             return !title.length ? qsTr("Без имени") : title 
@@ -43,6 +49,12 @@ Rectangle {
                         header_desc: item.desc
                         onOpened: openTask(index)    
                         onDeleted: deletedTask(index)
+                        onSetRandColor: {
+                            item.colorSchemeId = ColorSchemeModel.Get(
+                                Math.floor(Math.random()*ColorSchemeModel.rowCount()
+                            )).id
+                            TaskModel.unloadChanges()
+                        }
                     }
                 }
             }
