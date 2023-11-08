@@ -7,7 +7,7 @@ TaskModel::TaskModel(QObject* parent)
 }
 
 bool TaskModel::addEmpty() {
-    bool is = DataBaseAccess::Instanse().Insert(task_t{});
+    bool is = DataBaseAccess::Instanse().Insert(Task_Tuple{});
     if (is)
         selectModel();
     return is;
@@ -20,7 +20,7 @@ void TaskModel::searchText(const QString& str) {
 
 QString TaskModel::getFullText(int index) {
     auto opt = DataBaseAccess::Instanse().specialSelect11<std::string>(
-        std::format("SELECT full_text FROM {} WHERE id = {} ", types_impl::tuple_info_name<task_t>(),
+        std::format("SELECT full_text FROM {} WHERE id = {} ", Task_Tuple::tuple_info_name(),
         m_list[index]->id())
      );
     return QString::fromStdString(opt.has_value() ? opt.value() : "");
@@ -72,7 +72,7 @@ QHash<int, QByteArray> TaskModel::roleNames() const {
 
 void TaskModel::selectModel() { 
     emit beginResetModel(); 
-    auto opt = DataBaseAccess::Instanse().Select<task_t>(DataBaseAccess::FilterSelectPack{
+    auto opt = DataBaseAccess::Instanse().Select<Task_Tuple>(DataBaseAccess::FilterSelectPack{
             false,
             "updated_at",
             (m_current_filter_search.isEmpty() ? std::nullopt : std::make_optional(m_current_filter_search.toStdString())),
@@ -82,7 +82,7 @@ void TaskModel::selectModel() {
         auto& list = opt.value();
         m_list.clear();
         m_list.resize(list.size());
-        std::transform(list.begin(), list.end(), m_list.begin(), [this](const task_t& task_i) {
+        std::transform(list.begin(), list.end(), m_list.begin(), [this](const Task_Tuple& task_i) {
             std::unique_ptr<Task> task_o(std::make_unique<Task>(this));
             task_o->setData(task_i);
             return std::move(task_o);

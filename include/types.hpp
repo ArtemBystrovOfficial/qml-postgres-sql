@@ -2,39 +2,28 @@
 
 #include <QObject>
 
-using task_t = std::tuple<int, std::string, std::string, std::string >;
-using task_list_t = std::vector<task_t>;
+template <class D, class Tuple> requires std::_Is_specialization_v<Tuple, std::tuple>
+struct BasicTypeDB{
+	static std::string tuple_info_name() { return D::tuple_info_name_override(); }
+	static std::string tuple_info_custom_select() { return  D::tuple_info_custom_select_override(); }
+	static std::string field_info(int field) { return  D::field_info_override(field); }
 
-namespace types_impl {
-	
-	//TABLE
-	template <class Tuple>
-	std::string tuple_info_name() {
-		if constexpr (std::is_same_v<Tuple, task_t>)
-			return "tasks";
-		return "";
+	using tuple_t = Tuple;
+	static constexpr int tuple_size = std::tuple_size_v<Tuple>;
+	Tuple tp;
+};
+
+struct Task_Tuple : public BasicTypeDB<Task_Tuple, std::tuple<int, std::string, std::string, std::string> > {
+	static std::string tuple_info_name_override() { return "tasks"; }
+	static std::string tuple_info_custom_select_override() { return "id, "
+			"COALESCE(title, ''::text) AS title, "
+			"COALESCE(to_char(updated_at, 'DD Month YYYY HH24:MI'::text), ''::text) AS format_updated_at, "
+			"COALESCE(\"left\"(full_text, 30), ''::text) AS formated_full_text";
 	}
-
-	//TABLE, CUSTOM SELECT
-	template <class Tuple>
-	std::pair<std::string, std::string> tuple_info() {
-		if constexpr (std::is_same_v<Tuple, task_t>)
-			return { tuple_info_name <Tuple>(),
-				"id, " 
-				"COALESCE(title, ''::text) AS title, "
-				"COALESCE(to_char(updated_at, 'DD Month YYYY HH24:MI'::text), ''::text) AS format_updated_at, "
-				"COALESCE(\"left\"(full_text, 30), ''::text) AS formated_full_text"
-		};
-		return { "","*" }; //SELECT *
+	static std::string field_info_override(int field) {
+		static const auto fields = std::vector{ "id", "title", "created_at", "full_text" };
+		return fields[field];
 	}
+};
 
-	template <class Tuple>
-	std::string field_info(int field) {
-		if constexpr (std::is_same_v<Tuple, task_t>) {
-			static const auto fields = std::vector{ "id", "title", "created_at", "full_text" };
-			return fields[field];
-		};
-		return "";
-	}
-
-}
+using Task_Tuple_List = std::vector<Task_Tuple>;

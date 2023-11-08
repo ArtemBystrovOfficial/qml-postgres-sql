@@ -20,26 +20,26 @@ signals:
     void descChanged();
 
 public:
-    using update_pool = std::bitset<std::tuple_size_v<task_t>>;
+    using update_pool = std::bitset<Task_Tuple::tuple_size>;
 
     Task(QObject* parent = nullptr) : QObject(parent) {};
 
-    int id() const { return std::get<0>(m_data); };
-    QString title() const { return QString::fromStdString(std::get<1>(m_data)); }
-    QString updatedAt() const { return QString::fromStdString(std::get<2>(m_data)); }
-    QString desc() const { return QString::fromStdString(std::get<3>(m_data)); }
+    int id() const { return std::get<0>(m_data.tp); };
+    QString title() const { return QString::fromStdString(std::get<1>(m_data.tp)); }
+    QString updatedAt() const { return QString::fromStdString(std::get<2>(m_data.tp)); }
+    QString desc() const { return QString::fromStdString(std::get<3>(m_data.tp)); }
 
-    void setTitle(const QString& str) { std::get<1>(m_data) = str.toStdString(); m_to_update_.set(1); emit titleChanged(); };
-    void setUpdatedAt(const QString& str) { std::get<2>(m_data) = str.toStdString(); m_to_update_.set(2); emit updatedAtChanged(); };
-    void setDesc(const QString& str) { std::get<3>(m_data) = str.toStdString(); m_to_update_.set(3); emit descChanged(); };
+    void setTitle(const QString& str) { std::get<1>(m_data.tp) = str.toStdString(); m_to_update_.set(1); emit titleChanged(); };
+    void setUpdatedAt(const QString& str) { std::get<2>(m_data.tp) = str.toStdString(); m_to_update_.set(2); emit updatedAtChanged(); };
+    void setDesc(const QString& str) { std::get<3>(m_data.tp) = str.toStdString(); m_to_update_.set(3); emit descChanged(); };
 
-    const task_t & getData() const { return m_data; }
-    void setData(const task_t& data) { m_data = data; }
+    const Task_Tuple& getData() const { return m_data; }
+    void setData(const Task_Tuple& data) { m_data = data; }
     
     bool isSomeToUpdate() { return m_to_update_.any(); } 
     update_pool unload() { update_pool out = m_to_update_; m_to_update_.reset(); return out; }
 private:
-    task_t m_data;
+    Task_Tuple m_data;
     update_pool m_to_update_;
 };
 

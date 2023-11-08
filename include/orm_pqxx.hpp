@@ -7,6 +7,9 @@
 #include <types.hpp>
 #include <bitset>
 
+template <class T>
+concept CustomTupleC = std::is_base_of_v<BasicTypeDB<T, typename T::tuple_t>, T>;
+
 class DataBaseAccess {
 public:
 	static DataBaseAccess& Instanse(const std::string& connection_query = "") {
@@ -23,16 +26,16 @@ public:
 		//::optional<std::string> filtered;
 	};
 
-	template<class Tuple>
+	template<class Tuple> requires CustomTupleC<Tuple>
 	std::optional<std::vector<Tuple>> Select(const FilterSelectPack& pack);
 
-	template <typename Tuple, std::size_t TupSize = std::tuple_size_v<Tuple>>
+	template <typename Tuple, std::size_t TupSize = Tuple::tuple_size> requires CustomTupleC<Tuple>
 	bool Insert(const Tuple&);
 
-	template <typename Tuple, std::size_t TupSize = std::tuple_size_v<Tuple>>
+	template <typename Tuple, std::size_t TupSize = Tuple::tuple_size> requires CustomTupleC<Tuple>
 	bool Update(const Tuple&, const std::bitset<TupSize>&);
 
-	template<class Tuple>
+	template<class Tuple> requires CustomTupleC<Tuple>
 	bool Delete(const Tuple& tuple);
 
 	template<class T>
@@ -64,10 +67,11 @@ private:
 
 //SELECT
 
-template<class Tuple>
+template<class Tuple> requires CustomTupleC<Tuple>
 inline std::optional<std::vector<Tuple>> DataBaseAccess::Select(const FilterSelectPack& pack) {
 	try {
-		auto [from, sel] = types_impl::tuple_info<Tuple>();
+		auto from = Task_Tuple::tuple_info_name();
+		auto sel = Task_Tuple::tuple_info_custom_select();
 		auto query = std::format(
 			"SELECT {} FROM {} {} {}",
 			sel, from, searchRule(pack), sortRule(pack)
@@ -78,7 +82,7 @@ inline std::optional<std::vector<Tuple>> DataBaseAccess::Select(const FilterSele
 		std::vector <Tuple> m_out;
 		for (auto row : res) {
 			m_out.push_back(Tuple{});
-			row.to(m_out.back());
+			row.to(m_out.back().tp);
 		}
 
 		return m_out;
@@ -90,7 +94,7 @@ inline std::optional<std::vector<Tuple>> DataBaseAccess::Select(const FilterSele
 
 //INSERT
 
-template<typename Tuple, std::size_t TupSize>
+template<typename Tuple, std::size_t TupSize> requires CustomTupleC<Tuple>
 inline bool DataBaseAccess::Insert(const Tuple& tp) {
 	std::string query = insertImpl(tp, std::make_index_sequence<TupSize>{});
 	try {
@@ -104,20 +108,18 @@ inline bool DataBaseAccess::Insert(const Tuple& tp) {
 	return true;
 }
 
-template<typename Tuple, std::size_t ...Is>
+template<typename Tuple, std::size_t ...Is> 
 inline std::string DataBaseAccess::insertImpl(const Tuple& tp, std::index_sequence<Is...>) {
 		size_t index = 0;
 		std::string out = "INSERT INTO ";
-		out += types_impl::tuple_info_name<Tuple>();
+		out += Tuple::tuple_info_name();
 		out += " VALUES (DEFAULT, ";
 		auto printElem = [&index, &out, this](const auto& x) {
-			if (index != 0) { //id skip
-				out += convertType(x);
-				out += ", ";
-			}
+			if (index != 0) //id skip
+				out += convertType(x) + ", ";
 			index++;
 		};
-		(printElem(std::get<Is>(tp)), ...);
+		(printElem(std::get<Is>(tp.tp)), ...);
 		out.erase(out.end() - 2, out.end());
 		out += ") ";
 		return out;
@@ -125,14 +127,14 @@ inline std::string DataBaseAccess::insertImpl(const Tuple& tp, std::index_sequen
 
 //UPDATE 
 
-template<typename Tuple, std::size_t TupSize>
+template<typename Tuple, std::size_t TupSize> requires CustomTupleC<Tuple>
 inline bool DataBaseAccess::Update(const Tuple& tp, const std::bitset<TupSize>& update_set) {
 	std::string query = std::format(
 		"UPDATE {} SET {} WHERE {} = {}",
-		types_impl::tuple_info_name<Tuple>(),
+		Tuple::tuple_info_name(),
 		updateImpl(tp, update_set, std::make_index_sequence<TupSize>{}),
-		types_impl::field_info<Tuple>(0),
-		std::get<0>(tp)
+		Tuple::field_info(0),
+		std::get<0>(tp.tp)
 	);
 	try {
 		pqxx::work w(m_conn);
@@ -150,27 +152,23 @@ inline std::string DataBaseAccess::updateImpl(const Tuple& tp, const std::bitset
 	size_t index = 0;
 	std::string out;
 	auto printElem = [&index, &out, &update_set, this](const auto& x) {
-		if (update_set[index]) {
-			out += types_impl::field_info<Tuple>(index);
-			out += " = ";
-			out += convertType(x);
-			out += ", ";
-		}
+		if (update_set[index]) 
+			out += std::format("{} = {} , ", Tuple::field_info(index), convertType(x));
 		index++;
 	};
-	(printElem(std::get<Is>(tp)), ...);
+	(printElem(std::get<Is>(tp.tp)), ...);
 	out.erase(out.end() - 2, out.end());
 	return out;
 }
 
 //DELETE
-template<class Tuple>
+template<class Tuple> requires CustomTupleC<Tuple>
 inline bool DataBaseAccess::Delete(const Tuple& tp) {
 	try {
 		pqxx::work w(m_conn);
 		w.exec(std::format("DELETE FROM {} WHERE id = {}",
-				types_impl::tuple_info_name<Tuple>(),
-				std::get<0>(tp)
+				Tuple::tuple_info_name(),
+				std::get<0>(tp.tp)
 			   )
 		);
 		w.commit();
