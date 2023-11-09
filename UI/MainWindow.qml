@@ -27,8 +27,8 @@ ApplicationWindow {
     header: MainToolBar {  
         mainStackView: mainStackView
         onNewTask: {
-            TaskModel.addEmpty()
-            openTask(0)
+            checkError(TaskModel.addEmpty())
+                openTask(0)
         }
         onSearchRequest: TaskModel.searchText(text) 
         onReturnFromTask: {
@@ -42,7 +42,7 @@ ApplicationWindow {
         id: taskList
         TaskList {
             onOpenedTask: root.openTask(index)
-            onDeletedTask: TaskModel.Delete(index)
+            onDeletedTask: checkError(TaskModel.Delete(index))
         }
     }
 
@@ -61,5 +61,17 @@ ApplicationWindow {
     }
     Component.onCompleted: {
         mainStackView.push(taskList)
+    }
+
+    function checkError(er) {
+        var is = (er === "");
+         if(!is)
+            errorBar.text = er
+        return is
+    }
+
+    footer: Label {
+        id: errorBar
+        text: "ok"
     }
 }

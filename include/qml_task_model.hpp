@@ -5,6 +5,7 @@
 #include <bitset>
 #include <QObject>
 
+
 //TODO import meta factory object and models from another project and adapt from proto to tuples
 
 class Task : public QObject {
@@ -27,11 +28,11 @@ public:
 
     Task(QObject* parent = nullptr) : QObject(parent) {};
 
-    int id() const { return std::get<0>(m_data.tp); };
-    QString title() const { return QString::fromStdString(std::get<1>(m_data.tp)); }
-    QString updatedAt() const { return QString::fromStdString(std::get<2>(m_data.tp)); }
-    QString desc() const { return QString::fromStdString(std::get<3>(m_data.tp)); }
-    int colorSchemeId() const { return std::get<4>(m_data.tp); }
+    int id() const { return std::get<0>(m_data.tp); }; //NOT NULL
+    QString title() const { auto& val = std::get<1>(m_data.tp); return QString::fromStdString(null_values::is_null(val) ? "" : val); }
+    QString updatedAt() const { auto& val = std::get<2>(m_data.tp); return QString::fromStdString(null_values::is_null(val) ? "" : val); }
+    QString desc() const { auto& val = std::get<3>(m_data.tp); return QString::fromStdString(null_values::is_null(val) ? "" : val); }
+    int colorSchemeId() const { auto& val = std::get<4>(m_data.tp); return null_values::is_null(val) ? -1 : val; }
 
     void setTitle(const QString& str) { std::get<1>(m_data.tp) = str.toStdString(); m_to_update_.set(1); emit titleChanged(); };
     void setUpdatedAt(const QString& str) { std::get<2>(m_data.tp) = str.toStdString(); m_to_update_.set(2); emit updatedAtChanged(); };
@@ -54,11 +55,11 @@ class TaskModel : public QAbstractListModel {
 public:
     explicit TaskModel(QObject* parent = nullptr);
 
-    Q_INVOKABLE bool addEmpty();
+    Q_INVOKABLE QString addEmpty();
     Q_INVOKABLE void searchText(const QString &);
     Q_INVOKABLE void unloadChanges();
     Q_INVOKABLE Task* Get(int index);
-    Q_INVOKABLE bool Delete(int index);
+    Q_INVOKABLE QString Delete(int index);
 
     Q_INVOKABLE QString getFullText(int index);
 

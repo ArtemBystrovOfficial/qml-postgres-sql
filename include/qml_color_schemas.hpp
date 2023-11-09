@@ -5,7 +5,6 @@
 #include <bitset>
 #include <QObject>
 #include <QColor>
-#include <orm_pqxx.hpp>
 
 class ColorScheme : public QObject {
     Q_OBJECT
@@ -38,59 +37,17 @@ class ColorSchemeModel : public QAbstractListModel {
 public:
     enum class role_t { item = Qt::UserRole + 1 };
 
-    explicit ColorSchemeModel(QObject* parent = nullptr) : QAbstractListModel(parent) {
-        selectModel();
-    }
+    explicit ColorSchemeModel(QObject* parent = nullptr);
 
-    Q_INVOKABLE ColorScheme* Get(int index) {
-        return m_list[index].get();
-    }
+    Q_INVOKABLE ColorScheme* Get(int index);
+    Q_INVOKABLE ColorScheme* GetById(int id);
 
-    Q_INVOKABLE ColorScheme* GetById(int id) {
-        auto it = std::find_if(m_list.begin(), m_list.end(), [=](auto & ptr) { return id == ptr->id(); });
-        return (it == m_list.end() ? nullptr : it->get());
-    }
-
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-        return m_list.size();
-    }
-    QVariant data(const QModelIndex& index, int role) const override {
-        if (!index.isValid())
-            return {};
-
-        switch (static_cast<role_t>(role)) {
-        case role_t::item: return QVariant::fromValue(m_list[index.row()].get()); break;
-        }
-
-        return {};
-    }
-    QHash<int, QByteArray> roleNames() const override {
-        QHash<int, QByteArray> roles;
-        roles[static_cast<int>(role_t::item)] = "item";
-        return roles;
-    }
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
 private:
-    void selectModel() {
-        emit beginResetModel();
-        auto opt = DataBaseAccess::Instanse().Select<Color_Tuple>(DataBaseAccess::FilterSelectPack{
-                std::nullopt,
-                "",
-                std::nullopt,
-                {}
-        });
-        if (opt.has_value()) {
-            auto& list = opt.value();
-            m_list.clear();
-            m_list.resize(list.size());
-            std::transform(list.begin(), list.end(), m_list.begin(), [this](const Color_Tuple& task_i) {
-                std::unique_ptr<ColorScheme> task_o(std::make_unique<ColorScheme>(this));
-                task_o->setData(task_i);
-                return std::move(task_o);
-            });
-        }
-        emit endResetModel();
-    }
+    void selectModel();
 
     std::vector<std::unique_ptr<ColorScheme>> m_list;
 };

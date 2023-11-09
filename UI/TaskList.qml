@@ -36,9 +36,8 @@ Rectangle {
                         width: parent.width
                         height: taskHeight
                         color_scheme: {
-                            if(item.colorSchemeId == -1)
+                            if(item.colorSchemeId === -1)
                                 return "#000000"
-                            console.log(item.colorSchemeId)
                             return ColorSchemeModel.GetById(item.colorSchemeId).color
                         } 
                         header_title: {

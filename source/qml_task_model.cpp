@@ -1,16 +1,18 @@
 #include <qml_task_model.hpp>
 #include <orm_pqxx.hpp>
 
+static DataBaseAccess::ExceptionHandler eh;
+
 TaskModel::TaskModel(QObject* parent)
     : QAbstractListModel(parent) {
     selectModel();
 }
 
-bool TaskModel::addEmpty() {
-    bool is = DataBaseAccess::Instanse().Insert(Task_Tuple{});
-    if (is)
+QString TaskModel::addEmpty() {
+    DataBaseAccess::Instanse().Insert(Task_Tuple(), eh);
+    if (eh)
         selectModel();
-    return is;
+    return QString::fromStdString(eh.what);
 }
 
 void TaskModel::searchText(const QString& str) {
@@ -20,8 +22,10 @@ void TaskModel::searchText(const QString& str) {
 
 QString TaskModel::getFullText(int index) {
     auto opt = DataBaseAccess::Instanse().specialSelect11<std::string>(
-        std::format("SELECT full_text FROM {} WHERE id = {} ", Task_Tuple::tuple_info_name(),
-        m_list[index]->id())
+        std::format("SELECT COALESCE(full_text, ''::text) AS ft FROM {} WHERE id = {}",
+        Task_Tuple::tuple_info_name(),
+        m_list[index]->id()),
+        eh
      );
     return QString::fromStdString(opt.has_value() ? opt.value() : "");
 }
@@ -30,18 +34,18 @@ Q_INVOKABLE void TaskModel::unloadChanges() {
     bool is_any = false;
     for (auto& elem : m_list) 
         if (elem->isSomeToUpdate()) {
-            DataBaseAccess::Instanse().Update(elem->getData(), elem->unload());
+            DataBaseAccess::Instanse().Update(elem->getData(), elem->unload(), eh);
             is_any = true;
         }
     if (is_any)
         selectModel();
 }
 
-Q_INVOKABLE bool TaskModel::Delete(int index) {
-    bool is = DataBaseAccess::Instanse().Delete(m_list[index]->getData());
-    if(is)
+Q_INVOKABLE QString TaskModel::Delete(int index) {
+    DataBaseAccess::Instanse().Delete(m_list[index]->getData(), eh);
+    if(eh)
         selectModel();
-    return is;
+    return QString::fromStdString(eh.what);
 }
 
 Q_INVOKABLE Task* TaskModel::Get(int index) {
@@ -77,7 +81,7 @@ void TaskModel::selectModel() {
             "updated_at",
             (m_current_filter_search.isEmpty() ? std::nullopt : std::make_optional(m_current_filter_search.toStdString())),
             {"title", "full_text"}
-    });
+    }, eh);
     if (opt.has_value()) {
         auto& list = opt.value();
         m_list.clear();
