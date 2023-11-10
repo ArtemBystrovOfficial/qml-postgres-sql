@@ -18,7 +18,7 @@ ApplicationWindow {
 
     function openTask(index) {
         mainStackView.push(editArea,
-            { "taskItem" : TaskModel.Get(index),
+            { "taskItem" : TaskModel.itemAt(index),
               "fullText" : TaskModel.getFullText(index) }
         )
         last_index_opened = index
@@ -27,14 +27,14 @@ ApplicationWindow {
     header: MainToolBar {  
         mainStackView: mainStackView
         onNewTask: {
-            checkError(TaskModel.addEmpty())
+            checkError(TaskModel.Add())
                 openTask(0)
         }
         onSearchRequest: TaskModel.searchText(text) 
         onReturnFromTask: {
             mainStackView.get(1).saveChanges();
             mainStackView.pop()
-            TaskModel.unloadChanges();
+            TaskModel.CommitChanges();
         }                   
     }
 

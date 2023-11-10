@@ -27,7 +27,7 @@ public:
 
 	struct ExceptionHandler {
 		friend class DataBaseAccess;
-		operator bool() noexcept { return !is_error_; }
+		operator bool() noexcept { return is_error_; }
 		explicit ExceptionHandler() : is_error_(false) {};
 
 		std::string what;

@@ -52,7 +52,7 @@ Rectangle {
                             item.colorSchemeId = ColorSchemeModel.Get(
                                 Math.floor(Math.random()*ColorSchemeModel.rowCount()
                             )).id
-                            TaskModel.unloadChanges()
+                            TaskModel.CommitChanges()
                         }
                     }
                 }
