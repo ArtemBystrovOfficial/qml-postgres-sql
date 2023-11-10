@@ -5,7 +5,6 @@
 #include <bitset>
 #include <orm_pqxx.hpp>
 #include <QQmlApplicationEngine>
-//TYPES
 
 #define INT_NULL_PROPERTY(PROPERTY_NAME, INDEX_PROPERTY, DEFAULT) \
     Q_PROPERTY(int PROPERTY_NAME READ PROPERTY_NAME WRITE set_##PROPERTY_NAME NOTIFY PROPERTY_NAME##Changed) \
@@ -44,7 +43,8 @@ public: \
     Q_INVOKABLE QString Add(meta_type_t* obj = nullptr) { return add(obj); } \
     Q_INVOKABLE QString CommitChanges() { return update_all_to_bd(); } \
     Q_INVOKABLE QString Delete(int index) { return remove(index); } \
-    Q_INVOKABLE meta_type_t* itemAt(int index) { return item_at(index); } 
+    Q_INVOKABLE meta_type_t* itemAt(int index) { return item_at(index); } \
+    Q_INVOKABLE meta_type_t* itemById(int id) { return item_by_id(id); }
 
 //#define META_MODEL_REGISTER(CHILD_NAME) \
     //qmlRegisterInterface<CHILD_NAME>(#CHILD_NAME,1);
@@ -117,6 +117,15 @@ public:
 
      meta_type_t* item_at(int index) {
          return m_list[index].get();
+     }
+
+     meta_type_t* item_by_id(int id) {
+         auto it = std::find_if(m_list.cbegin(), m_list.cend(), [&](const std::unique_ptr <meta_type_t>& elem) {
+             if constexpr (requires { elem->id(); })
+                return elem->id() == id;
+             return false;
+         });
+         return (it == m_list.end() ? nullptr : it->get());
      }
 
 //SORT, FILTER AND OTHER SETTINGS

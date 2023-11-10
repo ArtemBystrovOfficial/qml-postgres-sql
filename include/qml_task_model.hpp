@@ -33,13 +33,11 @@ public:
     STRING_NULL_PROPERTY(desc, 3, "")
     INT_NULL_PROPERTY(colorSchemeId, 4, -1)
 
-public:
     Task(QObject* parent = nullptr) : MetaQmlObject<TaskBasicType>(parent) {};
 };
 
 class TaskModel : public MetaQmlModel<Task> {
     Q_OBJECT
-
     META_MODEL_QML_FUNCTIONS
 public:
     TaskModel(QObject* parent = nullptr) 

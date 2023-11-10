@@ -38,7 +38,7 @@ Rectangle {
                         color_scheme: {
                             if(item.colorSchemeId === -1)
                                 return "#000000"
-                            return ColorSchemeModel.GetById(item.colorSchemeId).color
+                            return ColorSchemeModel.itemById(item.colorSchemeId).color
                         } 
                         header_title: {
                             var title = item.title
@@ -49,7 +49,7 @@ Rectangle {
                         onOpened: openTask(index)    
                         onDeleted: deletedTask(index)
                         onSetRandColor: {
-                            item.colorSchemeId = ColorSchemeModel.Get(
+                            item.colorSchemeId = ColorSchemeModel.itemAt(
                                 Math.floor(Math.random()*ColorSchemeModel.rowCount()
                             )).id
                             TaskModel.CommitChanges()

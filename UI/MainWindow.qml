@@ -34,7 +34,7 @@ ApplicationWindow {
         onReturnFromTask: {
             mainStackView.get(1).saveChanges();
             mainStackView.pop()
-            TaskModel.CommitChanges();
+            checkError(TaskModel.CommitChanges());
         }                   
     }
 

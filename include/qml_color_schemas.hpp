@@ -1,53 +1,34 @@
 #pragma once
 
-#include <QAbstractListModel>
-#include <types.hpp>
-#include <bitset>
-#include <QObject>
-#include <QColor>
+#include <qml_meta.hpp>
 
-class ColorScheme : public QObject {
-    Q_OBJECT
-
-    Q_PROPERTY(int id READ id CONSTANT)
-    Q_PROPERTY(QColor color READ color CONSTANT)
-
-signals:
-    void titleChanged();
-    void updatedAtChanged();
-    void descChanged();
-
-public:
-
-    ColorScheme(QObject* parent = nullptr) : QObject(parent) {};
-
-    int id() const { return std::get<0>(m_data.tp); };
-    QColor color() const { return QString::fromStdString(std::get<1>(m_data.tp)); }
-
-    const Color_Tuple& getData() const { return m_data; }
-    void setData(const Color_Tuple& data) { m_data = data; }
-
-private:
-    Color_Tuple m_data;
+struct Color_Tuple : public BasicTypeDB <Color_Tuple, std::tuple<int, std::string>> {
+    static std::string tuple_info_name_override() { return "color_schemas"; }
+    static std::string tuple_info_custom_select_override() {
+        return "*";
+    }
+    static std::string field_info_override(int field) {
+        static const auto fields = std::vector{ "id", "main_color_code" };
+        return fields[field];
+    }
 };
 
-class ColorSchemeModel : public QAbstractListModel {
+class ColorScheme : public MetaQmlObject<Color_Tuple> {
     Q_OBJECT
+public:
+    INT_PRIMARY_PROPERTY(id, 0)
+    STRING_NULL_PROPERTY(color, 1, "")
 
 public:
-    enum class role_t { item = Qt::UserRole + 1 };
+    ColorScheme(QObject* parent = nullptr) : MetaQmlObject<Color_Tuple>(parent) {};
+};
 
-    explicit ColorSchemeModel(QObject* parent = nullptr);
-
-    Q_INVOKABLE ColorScheme* Get(int index);
-    Q_INVOKABLE ColorScheme* GetById(int id);
-
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex& index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-private:
-    void selectModel();
-
-    std::vector<std::unique_ptr<ColorScheme>> m_list;
+class ColorSchemeModel : public MetaQmlModel<ColorScheme> {
+    Q_OBJECT
+    META_MODEL_QML_FUNCTIONS
+public:
+    ColorSchemeModel(QObject* parent = nullptr)
+        : MetaQmlModel<ColorScheme>(DataBaseAccess::FilterSelectPack{ std::nullopt, "", std::nullopt, {}}) {
+        select_model();
+    }
 };
