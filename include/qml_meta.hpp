@@ -164,6 +164,7 @@ protected:
     void select_model() {
         emit beginResetModel();
         auto opt = DataBaseAccess::Instanse().Select<tuple_t>(m_fill_pack, eh);
+        std::cout << eh.what;
         if (opt.has_value()) {
             auto& list = opt.value();
             m_list.clear();
