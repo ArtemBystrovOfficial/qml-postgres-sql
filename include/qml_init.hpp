@@ -3,6 +3,8 @@
 class QmlSingletonModels {
 public:
   static QmlSingletonModels& Instanse();
-private: 
+	
+private:
 	QmlSingletonModels();
+
 };

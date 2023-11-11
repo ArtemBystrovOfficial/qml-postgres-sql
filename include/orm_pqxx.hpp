@@ -23,6 +23,7 @@ public:
 
 		std::optional<std::string> search_text;
 		std::vector<std::string> search_fields;
+		bool invert_search_fields = false;
 	};
 
 	struct ExceptionHandler {
@@ -64,6 +65,10 @@ private:
 //OTHER
 	std::string convertType(const auto & x) {
 		using type = std::remove_cvref_t<decltype(x)>;
+	//not nullable type
+		if constexpr (std::is_same_v <type, bool>)
+			return (x ? "TRUE" : "FALSE");
+
 		if (x == null_values::get<type>())
 			return "NULL";
 		if constexpr (std::is_same_v<type, std::string>)
@@ -131,9 +136,9 @@ inline std::string DataBaseAccess::insertImpl(const Tuple& tp, std::index_sequen
 	size_t index = 0;
 	std::string out = "INSERT INTO ";
 	out += Tuple::tuple_info_name();
-	out += " VALUES (DEFAULT, ";
+	out += std::format(" VALUES {}", Tuple::auto_increment_first() ? "(DEFAULT, " : "(");
 	auto printElem = [&index, &out, this](const auto& x) {
-		if (index != 0) //id skip
+		if (!(!index && Tuple::auto_increment_first())) //id skip
 			out += convertType(x) + ", ";
 		index++;
 	};
@@ -152,7 +157,7 @@ inline void DataBaseAccess::Update(const Tuple& tp, const std::bitset<TupSize>& 
 		Tuple::tuple_info_name(),
 		updateImpl(tp, update_set, std::make_index_sequence<TupSize>{}),
 		Tuple::field_info(0),
-		std::get<0>(tp.tp)
+		convertType(std::get<0>(tp.tp))
 	);
 	try {
 		pqxx::work w(m_conn);
@@ -187,9 +192,10 @@ template<class Tuple> requires CustomTupleC<Tuple>
 inline void DataBaseAccess::Delete(const Tuple& tp, ExceptionHandler& eh) {
 	try {
 		pqxx::work w(m_conn);
-		w.exec(std::format("DELETE FROM {} WHERE id = {}",
+		w.exec(std::format("DELETE FROM {} WHERE {} = {}",
 				Tuple::tuple_info_name(),
-				std::get<0>(tp.tp)
+				Tuple::field_info(0),
+				convertType(std::get<0>(tp.tp))
 			   )
 		);
 		w.commit();

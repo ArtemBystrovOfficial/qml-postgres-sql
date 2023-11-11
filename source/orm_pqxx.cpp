@@ -5,9 +5,9 @@ std::string DataBaseAccess::searchRule(const FilterSelectPack& pack) {
 	if (pack.search_text.has_value()) {
 		if (pack.search_fields.empty())
 			return "";
-		for (auto& field : pack.search_fields) {
-			out += std::format("{} ILIKE '%' || '{}' || '%' OR ", field, pack.search_text.value());
-		}
+		for (auto& field : pack.search_fields) 
+			out += std::format("{} {} ILIKE '%' || '{}' || '%' OR ", field, pack.invert_search_fields ? "NOT" :"", pack.search_text.value());
+		//invert_search_fields
 		out.erase(out.end() - 3, out.end()); //Last OR
 	}
 	else

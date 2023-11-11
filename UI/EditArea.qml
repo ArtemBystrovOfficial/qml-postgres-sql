@@ -9,6 +9,7 @@ Rectangle {
     function  saveChanges() {
         taskItem.title = titleArea.text
         taskItem.desc = descArea.text
+        taskItem.isBusy = false
     }
     
     color:"#444444"

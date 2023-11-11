@@ -11,8 +11,10 @@ namespace null_values {
 	T get() {
 		if constexpr (std::is_same_v<T, int>)
 			return std::numeric_limits<int>::min();
-		if constexpr (std::is_same_v<T,std::string>)
+		if constexpr (std::is_same_v<T, std::string>)
 			return "_null";
+		if constexpr (std::is_same_v<T, bool>)
+			return "false";
 	}
 
 	bool is_null(const auto & x) {
@@ -31,15 +33,30 @@ namespace null_values {
 template <class D, class Tuple> requires std::_Is_specialization_v<Tuple, std::tuple>
 struct BasicTypeDB{
 
+	using tuple_t = Tuple;
+	static constexpr int tuple_size = std::tuple_size_v<Tuple>;
+
 	BasicTypeDB() {
 		null_values::_fill_tuple_null(tp);
 	}
 
+// virtual abstract
 	static std::string tuple_info_name() { return D::tuple_info_name_override(); }
-	static std::string tuple_info_custom_select() { return  D::tuple_info_custom_select_override(); }
 	static std::string field_info(int field) { return  D::field_info_override(field); }
 
-	using tuple_t = Tuple;
-	static constexpr int tuple_size = std::tuple_size_v<Tuple>;
+//just vritual static
+	static std::string tuple_info_custom_select() {
+		if constexpr ( requires{ D::tuple_info_custom_select_override(); })
+			return D::tuple_info_custom_select_override();
+		else
+			return "";
+	}
+	static bool auto_increment_first() {
+		if constexpr ( requires{ D::auto_increment_first_override(); })
+			return D::auto_increment_first_override();
+		else
+			return true;
+	}
+
 	Tuple tp;
 };
