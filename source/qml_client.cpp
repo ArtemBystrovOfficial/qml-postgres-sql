@@ -9,8 +9,8 @@ LoginModel::LoginModel(QObject* parent)
     check_is_before(false) {
     m_uuid = generateUUIDString();
     set_filter({ std::nullopt, "", std::nullopt,{} });
-    Q_ASSERT(registerUser());
-    m_timer_poll.setInterval(1000);
+    registerUser();
+    m_timer_poll.setInterval(300);
     connect(&m_timer_poll, &QTimer::timeout, this, &LoginModel::checkUpdates);
     m_timer_poll.start();
 }
@@ -19,6 +19,7 @@ void LoginModel::updateChanges() {
     if (check_is_before)
         set_filter({ std::nullopt, "", std::nullopt,{} });
     select_model();
+
     for (auto& value : m_list)
         if (value->uuid().toStdString() != m_uuid)
             value->set_isUpdateData(true);
@@ -50,12 +51,16 @@ void LoginModel::checkUpdates() {
     if(!check_is_before)
         set_filter({ std::nullopt, "", m_uuid, { "user_uuid" } });
     select_model();
-    Q_ASSERT((m_list.size() == 1));
+    qDebug() << m_list.size();
+    if (m_list.size() != 1)
+        return;
+
     if (m_list.back()->isUpdateData()) {
         m_list.back()->set_isUpdateData(false);
         CommitChanges();
         emit updatedAnyData();
     }
+
     check_is_before = true;
 }
 
