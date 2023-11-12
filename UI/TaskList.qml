@@ -46,7 +46,7 @@ Rectangle {
                         }
                         header_updated_at: item.updatedAt
                         header_desc: item.desc
-                        is_busy: item.isBusy
+                        is_busy: false //item.isBusy
 
                         onOpened: openTask(index)    
                         onDeleted: deletedTask(index)

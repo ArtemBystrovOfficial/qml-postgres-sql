@@ -51,7 +51,7 @@ void LoginModel::checkUpdates() {
     if(!check_is_before)
         set_filter({ std::nullopt, "", m_uuid, { "user_uuid" } });
     select_model();
-    qDebug() << m_list.size();
+
     if (m_list.size() != 1)
         return;
 

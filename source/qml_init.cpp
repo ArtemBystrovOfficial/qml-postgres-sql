@@ -35,19 +35,4 @@ QmlSingletonModels::QmlSingletonModels() {
         return color_model;
     });
 
-//Login
-    
-    static auto login_model = new LoginModel;
-
-    qmlRegisterType<Login>(REGISTER_QML_TYPES, "Login");
-    qmlRegisterSingletonType<LoginModel>(REGISTER_QML_TYPES, "LoginModel",
-    [&](QQmlEngine* engine, QJSEngine* scriptEngine) -> QObject* {
-         Q_UNUSED(engine)
-         Q_UNUSED(scriptEngine)
-         return login_model;
-    });
-
-//Conections beetwen
-    QObject::connect(task_model, &TaskModel::updated, login_model, &LoginModel::updateChanges);
-    QObject::connect(login_model, &LoginModel::updatedAnyData, task_model, &TaskModel::updateNow);
 }

@@ -17,9 +17,9 @@ ApplicationWindow {
     //}
 
     function openTask(index) {
-        LoginModel.stopListen()
-        TaskModel.itemAt(index).isBusy = true
-        TaskModel.CommitChanges(true)
+        //LoginModel.stopListen()
+        //TaskModel.itemAt(index).isBusy = true
+        //TaskModel.CommitChanges(true)
         mainStackView.push(editArea,
             { "taskItem" : TaskModel.itemAt(index),
               "fullText" : TaskModel.getFullText(index) }
@@ -38,7 +38,7 @@ ApplicationWindow {
             mainStackView.get(1).saveChanges();
             mainStackView.pop()
             checkError(TaskModel.CommitChanges());
-            LoginModel.startListen()
+            //LoginModel.startListen()
         }                   
     }
 
