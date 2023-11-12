@@ -38,13 +38,27 @@
         emit PROPERTY_NAME##Changed(); \
     }
 
+#define BOOL_PROPERTY(PROPERTY_NAME, INDEX_PROPERTY) \
+    Q_PROPERTY(bool PROPERTY_NAME READ PROPERTY_NAME WRITE set_##PROPERTY_NAME NOTIFY PROPERTY_NAME##Changed) \
+    Q_SIGNAL void PROPERTY_NAME##Changed(); \
+    bool PROPERTY_NAME() const { \
+        return std::get<INDEX_PROPERTY>(m_data.tp); \
+    } \
+    void set_##PROPERTY_NAME(bool is) { \
+        std::get<INDEX_PROPERTY>(m_data.tp) = is; \
+        m_to_update_.set(INDEX_PROPERTY); \
+        emit PROPERTY_NAME##Changed(); \
+    }
+
 #define META_MODEL_QML_FUNCTIONS \
-public: \
-    Q_INVOKABLE QString Add(meta_type_t* obj = nullptr) { return add(obj); } \
-    Q_INVOKABLE QString CommitChanges() { return update_all_to_bd(); } \
-    Q_INVOKABLE QString Delete(int index) { return remove(index); } \
+public slots: \
+    Q_INVOKABLE QString Add(meta_type_t* obj = nullptr) { QString er = _add(obj); if(er.isEmpty()) emit updated(); return er; } \
+    Q_INVOKABLE QString CommitChanges(bool is_not_update = false) { QString er = _update_all_to_bd(is_not_update); if(er.isEmpty()) emit updated(); return er; } \
+    Q_INVOKABLE QString Delete(int index) { QString er = _remove(index); if(er.isEmpty()) emit updated(); return er; } \
     Q_INVOKABLE meta_type_t* itemAt(int index) { return item_at(index); } \
-    Q_INVOKABLE meta_type_t* itemById(int id) { return item_by_id(id); }
+    Q_INVOKABLE meta_type_t* itemById(int id) { return item_by_id(id); } \
+public: \
+    Q_SIGNAL void updated(); 
 
 //#define META_MODEL_REGISTER(CHILD_NAME) \
     //qmlRegisterInterface<CHILD_NAME>(#CHILD_NAME,1);
@@ -85,14 +99,15 @@ public:
 
 //BASIC OPERATIONS
 
-     QString add(MetaObject* obj = nullptr) {
+     QString _add(MetaObject* obj = nullptr) {
          DataBaseAccess::Instanse().Insert(obj ? obj->getData() : tuple_t{}, eh);
-         if (!eh)
+         if (!eh) {
              select_model();
+         }
          return QString::fromStdString(eh.what);
      }
 
-     QString update_all_to_bd() {
+     QString _update_all_to_bd(bool is_not_update = false) {
          bool is_any = false;
          for (auto& elem : m_list)
              if (elem->isSomeToUpdate()) {
@@ -101,15 +116,17 @@ public:
                      return QString::fromStdString(eh.what);
                  is_any = true;
              }
-         if (is_any)
+         if (is_any && !is_not_update) {
              select_model();
+         }
          return QString::fromStdString(eh.what);
      }
 
-     QString remove(int index) {
+     QString _remove(int index) {
          DataBaseAccess::Instanse().Delete(m_list[index]->getData(), eh);
-         if (!eh)
+         if (!eh) {
              select_model();
+         }
          return QString::fromStdString(eh.what);
      }
 

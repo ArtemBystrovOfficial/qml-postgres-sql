@@ -1,6 +1,7 @@
 #include <qml_init.hpp>
 #include <qml_task_model.hpp>
 #include <qml_color_schemas.hpp>
+#include <qml_client.hpp>
 
 #include <QQmlApplicationEngine>
 
@@ -23,6 +24,7 @@ QmlSingletonModels::QmlSingletonModels() {
         return task_model;
     });
 
+//ColorScheme
     static auto color_model = new ColorSchemeModel;
 
     qmlRegisterType<ColorScheme>(REGISTER_QML_TYPES, "ColorScheme");
@@ -32,4 +34,5 @@ QmlSingletonModels::QmlSingletonModels() {
         Q_UNUSED(scriptEngine)
         return color_model;
     });
+
 }

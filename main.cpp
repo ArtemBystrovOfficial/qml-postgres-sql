@@ -8,10 +8,11 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
 
     DataBaseAccess::Instanse(
-        "user=postgres "
-        "host=localhost "
-        "password=9000 "
-        "dbname=task_app"
+        "user=root "
+        "host=rc1a-6ekts2fq0umn56q6.mdb.yandexcloud.net "
+        "port=6432 "
+        "password=90009000 "
+        "dbname=task_app2"
     );
         
     QmlSingletonModels::Instanse();

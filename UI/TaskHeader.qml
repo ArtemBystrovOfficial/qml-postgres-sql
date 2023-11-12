@@ -7,6 +7,7 @@ Rectangle {
     property string header_updated_at : "-"
     property string header_desc: "-"
     property color color_scheme
+    property bool is_busy
 
     signal opened()
     signal deleted()
@@ -27,7 +28,7 @@ Rectangle {
             id: title
             sourceComponent: cellInRow
             onLoaded: {
-                item.text = header_title
+                item.text = is_busy ? qsTr("Занят: ") + header_title : header_title
                 item.scale = 0.2
                 item.isTitle = true
                 item.color_scheme = color_scheme
@@ -54,6 +55,13 @@ Rectangle {
             }
         }
         Rectangle {
+        visible : is_busy
+            width:10
+            height:parent.height
+            color: "orange"
+        }
+        Rectangle {
+            visible: !is_busy
             color: "black"
             width: 20
             height: rootTask.height
@@ -115,10 +123,12 @@ Rectangle {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: {
                     if (mouse.button === Qt.RightButton) { // 'mouse' is a MouseEvent argument passed into the onClicked signal handler
-                        setRandColor()
+                        if(!is_busy)
+                            setRandColor()
                     } else if 
                     (mouse.button === Qt.LeftButton) {
-                        opened()    
+                        if(!is_busy)
+                            opened()    
                     }
                 }
             }

@@ -17,6 +17,9 @@ ApplicationWindow {
     //}
 
     function openTask(index) {
+        //LoginModel.stopListen()
+        //TaskModel.itemAt(index).isBusy = true
+        //TaskModel.CommitChanges(true)
         mainStackView.push(editArea,
             { "taskItem" : TaskModel.itemAt(index),
               "fullText" : TaskModel.getFullText(index) }
@@ -27,7 +30,7 @@ ApplicationWindow {
     header: MainToolBar {  
         mainStackView: mainStackView
         onNewTask: {
-            checkError(TaskModel.Add())
+            checkError(TaskModel.Add()) 
                 openTask(0)
         }
         onSearchRequest: TaskModel.searchText(text) 
@@ -35,6 +38,7 @@ ApplicationWindow {
             mainStackView.get(1).saveChanges();
             mainStackView.pop()
             checkError(TaskModel.CommitChanges());
+            //LoginModel.startListen()
         }                   
     }
 
